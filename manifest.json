@@ -12,6 +12,7 @@
   "description": "Расчет остаточного срока годности продукции",
   "orientation": "portrait-primary",
   "categories": ["productivity", "utilities"],
+  "permissions": [],
   "screenshots": [
     {
       "src": "screenshots/screenshot-01.jpg",
