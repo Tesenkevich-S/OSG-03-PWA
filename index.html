@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Калькулятор остаточного срока годности - мгновенный расчет процента и дней годности продукции">
+    <meta name="keywords" content="ОСГ, срок годности, калькулятор, процент годности, расчет срока">
+    <meta name="author" content="Telenkevich Sergey">
+    <title>ОСГ Калькулятор</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,
+        <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+            <circle cx='50' cy='50' r='48' fill='%231a237e'/>
+            <circle cx='50' cy='50' r='42' fill='white'/>
+            <text x='50' y='67' font-family='Arial, sans-serif' 
+                  font-size='55' font-weight='bold' 
+                  text-anchor='middle' fill='%231a237e'>%</text>
+        </svg>">
+    
+    <style>
+        :root {
+            --primary-blue: #1a237e;
+            --secondary-blue: #3498db;
+            --dark-blue: #2c3e50;
+            --success-green: #27ae60;
+            --warning-orange: #f39c12;
+            --error-red: #e74c3c;
+            --light-gray: #f5f5f5;
+            --medium-gray: #ddd;
+            --dark-gray: #666;
+            --white: #ffffff;
+            --shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background-color: var(--light-gray);
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* Header - уменьшаем */
+        .header {
+            text-align: center;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 5px;
+        }
+
+        .header h1 {
+            color: var(--primary-blue);
+            font-size: 20px;
+            margin-bottom: 2px;
+            font-weight: bold;
+        }
+
+        .header p {
+            color: var(--dark-gray);
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Hint - уменьшаем */
+        .hint {
+            font-size: 12px;
+            color: var(--secondary-blue);
+            text-align: center;
+            margin-bottom: 8px;
+            line-height: 1.3;
+            padding: 0 5px;
+        }
+
+        /* Input Group - УБИРАЕМ лишние промежутки */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .input-field label {
+            font-size: 15px;
+            font-weight: 500;
+            color: #444;
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        /* ВХОДНЫЕ ПОЛЯ - УВЕЛИЧИВАЕМ РАЗМЕР! */
+        .input-field input {
+            height: 48px;
+            padding: 0 12px;
+            font-size: 22px;
+            border: 2px solid var(--medium-gray);
+            border-radius: 8px;
+            outline: none;
+            transition: var(--transition);
+            background-color: var(--white);
+            text-align: center;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .input-field input:focus {
+            border-color: var(--secondary-blue);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        .input-field input.calculated {
+            background-color: #f8f9fa;
+            color: var(--dark-gray);
+        }
+
+        .input-field input.error {
+            border-color: var(--error-red);
+            background-color: #ffeaea;
+        }
+
+        .input-field .error-message {
+            color: var(--error-red);
+            font-size: 11px;
+            min-height: 14px;
+            text-align: center;
+        }
+
+        /* Quick Buttons - уменьшаем отступы */
+        .quick-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 5px;
+            margin-bottom: 8px;
+        }
+
+        .quick-btn {
+            padding: 8px 10px;
+            background-color: #f1f1f1;
+            border: 2px solid var(--medium-gray);
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            flex: 1;
+            min-width: 55px;
+            text-align: center;
+            user-select: none;
+        }
+
+        .quick-btn:hover {
+            background-color: #e6e6e6;
+        }
+
+        .quick-btn.active {
+            background-color: var(--secondary-blue);
+            color: var(--white);
+            border-color: #2980b9;
+        }
+
+        /* Results - делаем компактнее */
+        .results {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 0;
+            border-top: 1px solid #eee;
+            border-bottom: 1px solid #eee;
+            margin-top: 5px;
+        }
+
+        .current-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            text-align: center;
+            margin-bottom: 2px;
+        }
+
+        .percentage-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+        }
+
+        .percentage {
+            font-size: 58px;
+            font-weight: 700;
+            line-height: 1;
+            min-height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px 0;
+        }
+
+        .percentage.green { color: var(--success-green); }
+        .percentage.yellow { color: var(--warning-orange); }
+        .percentage.red { color: var(--error-red); }
+
+        .days-left {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--dark-blue);
+            text-align: center;
+            margin: 2px 0;
+        }
+
+        .expiration-date {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark-gray);
+            text-align: center;
+        }
+
+        /* Footer - оптимизируем для 2 элементов */
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 8px;
+            border-top: 1px solid #eee;
+            font-size: 10px;
+            color: var(--dark-gray);
+            margin-top: 5px;
+            flex-wrap: nowrap;
+        }
+
+        .footer-left {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary-blue);
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .footer-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            flex-shrink: 1;
+            min-width: 0;
+        }
+
+        .footer-center a {
+            color: var(--secondary-blue);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .footer-center a:hover {
+            color: var(--primary-blue);
+            text-decoration: underline;
+        }
+
+        .donate-sub {
+            font-size: 8px;
+            color: #888;
+            white-space: nowrap;
+        }
+
+        /* Responsive Design - корректируем */
+        @media (max-height: 700px) {
+            .container {
+                padding: 12px;
+                gap: 6px;
+            }
+            
+            .input-field input {
+                height: 42px;
+                font-size: 20px;
+                max-width: 260px;
+            }
+            
+            .quick-btn {
+                padding: 6px 8px;
+                font-size: 14px;
+                min-width: 50px;
+            }
+            
+            .percentage {
+                font-size: 48px;
+                min-height: 55px;
+            }
+            
+            .results {
+                padding: 10px 0;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .container {
+                padding: 10px;
+                gap: 5px;
+            }
+            
+            .header h1 {
+                font-size: 18px;
+            }
+            
+            .header p {
+                font-size: 13px;
+            }
+            
+            .input-field input {
+                max-width: 250px;
+                height: 44px;
+                font-size: 20px;
+            }
+            
+            .quick-btn {
+                min-width: 48px;
+                padding: 6px 8px;
+                font-size: 14px;
+            }
+            
+            .percentage {
+                font-size: 44px;
+            }
+            
+            .footer {
+                flex-wrap: nowrap;
+                gap: 5px;
+            }
+            
+            .footer-left {
+                font-size: 11px;
+            }
+            
+            .footer-center a {
+                font-size: 10px;
+            }
+        }
+
+        @media (max-height: 600px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+                gap: 5px;
+            }
+            
+            .input-group {
+                gap: 4px;
+            }
+            
+            .input-field input {
+                height: 40px;
+                font-size: 19px;
+                max-width: 240px;
+            }
+            
+            .results {
+                padding: 8px 0;
+                gap: 4px;
+            }
+            
+            .percentage {
+                font-size: 42px;
+                min-height: 50px;
+            }
+            
+            .days-left {
+                font-size: 16px;
+            }
+            
+            .expiration-date, .current-date {
+                font-size: 14px;
+            }
+        }
+
+        @media (max-height: 500px) {
+            .container {
+                padding: 8px;
+                gap: 4px;
+            }
+            .percentage {
+                font-size: 36px;
+                min-height: 42px;
+            }
+            .input-field input {
+                height: 36px;
+                font-size: 18px;
+                max-width: 220px;
+            }
+            .quick-btn {
+                padding: 4px 6px;
+                font-size: 13px;
+                min-width: 45px;
+            }
+            .days-left {
+                font-size: 15px;
+            }
+            .header h1 {
+                font-size: 16px;
+                margin-bottom: 0;
+            }
+            .header p {
+                font-size: 12px;
+            }
+        }
+        
+        @media (max-width: 350px) {
+            .footer-left {
+                font-size: 10px;
+            }
+            
+            .footer-center a {
+                font-size: 9px;
+            }
+            
+            .donate-sub {
+                font-size: 7px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ОСГ Калькулятор</h1>
+            <p>Расчет остаточного срока годности</p>
+        </div>
+        
+        <div class="hint">Введите любые два параметра для автоматического расчета</div>
+        
+        <div class="input-group">
+            <div class="input-field">
+                <label for="production-date">Дата производства</label>
+                <input type="text" id="production-date" 
+                       placeholder="ДД.ММ.ГГГГ" 
+                       maxlength="10" 
+                       tabindex="1"
+                       inputmode="numeric">
+                <div class="error-message" id="production-error"></div>
+            </div>
+            
+            <div class="input-field">
+                <label for="expiry-date">Годен до</label>
+                <input type="text" id="expiry-date" 
+                       placeholder="ДД.ММ.ГГГГ" 
+                       maxlength="10" 
+                       tabindex="2"
+                       inputmode="numeric">
+                <div class="error-message" id="expiry-error"></div>
+            </div>
+            
+            <div class="input-field">
+                <label for="shelf-life">Срок годности (дней)</label>
+                <input type="number" id="shelf-life" 
+                       placeholder="Введите число" 
+                       tabindex="3" 
+                       min="1" 
+                       max="99999" 
+                       step="1"
+                       inputmode="numeric">
+                <div class="error-message" id="shelf-life-error"></div>
+            </div>
+        </div>
+        
+        <div class="quick-buttons">
+            <div class="quick-btn" data-days="7">7</div>
+            <div class="quick-btn" data-days="14">14</div>
+            <div class="quick-btn" data-days="30">30</div>
+            <div class="quick-btn" data-days="90">90</div>
+            <div class="quick-btn" data-days="180">180</div>
+            <div class="quick-btn" data-days="365">365</div>
+        </div>
+        
+        <div class="results">
+            <div class="current-date" id="current-date"></div>
+            <div class="percentage-container">
+                <div class="percentage" id="percentage">-</div>
+            </div>
+            
+            <div class="days-left" id="days-left">-</div>
+            <div class="expiration-date" id="expiration-date-text">Дата истечения: -</div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-left">Telenkevich Sergey</div>
+            
+            <div class="footer-center">
+                <a href="#" id="footer-link" target="_blank" rel="noopener">Оценить приложение</a>
+                <div class="donate-sub" id="donate-sub" style="display: none;">(на развитие)</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Конфигурация приложения
+        const CONFIG = {
+            RUSTORE_LINK: 'https://apps.rustore.ru/app/com.example.osgcalculator',
+            DONATE_LINK: 'https://vtb.paymo.ru/collect-money/qr/?transaction=c1cf6ed0-fce4-4a5a-b9da-0e11e63dd00e',
+            MAX_SHELF_LIFE: 99999,
+            DAYS_IN_YEAR: 365,
+            QUICK_DAYS: [7, 14, 30, 90, 180, 365]
+        };
+
+        // DOM элементы
+        const elements = {
+            productionDate: document.getElementById('production-date'),
+            expiryDate: document.getElementById('expiry-date'),
+            shelfLife: document.getElementById('shelf-life'),
+            quickButtons: document.querySelectorAll('.quick-btn'),
+            percentage: document.getElementById('percentage'),
+            daysLeft: document.getElementById('days-left'),
+            expirationDateText: document.getElementById('expiration-date-text'),
+            currentDate: document.getElementById('current-date'),
+            footerLink: document.getElementById('footer-link'),
+            donateSub: document.getElementById('donate-sub'),
+            errors: {
+                production: document.getElementById('production-error'),
+                expiry: document.getElementById('expiry-error'),
+                shelfLife: document.getElementById('shelf-life-error')
+            }
+        };
+
+        // Состояние приложения
+        const state = {
+            activeQuickButton: null,
+            appRated: localStorage.getItem('appRated') === 'true'
+        };
+
+        // Утилитарные функции
+        const DateUtils = {
+            parseDate(dateStr) {
+                if (!dateStr) return null;
+                
+                const parts = dateStr.split('.');
+                if (parts.length !== 3) return null;
+                
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1;
+                const year = parseInt(parts[2], 10);
+                
+                if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+                if (day < 1 || day > 31) return null;
+                if (month < 0 || month > 11) return null;
+                if (year < 1000 || year > 9999) return null;
+                
+                const date = new Date(year, month, day);
+                if (isNaN(date.getTime())) return null;
+                
+                // Проверка корректности даты (29 февраля и т.д.)
+                if (date.getDate() !== day || date.getMonth() !== month || date.getFullYear() !== year) {
+                    return null;
+                }
+                
+                return date;
+            },
+
+            formatDate(date) {
+                if (!date || isNaN(date.getTime())) return '';
+                
+                const day = date.getDate().toString().padStart(2, '0');
+                const month = (date.getMonth() + 1).toString().padStart(2, '0');
+                const year = date.getFullYear();
+                
+                return `${day}.${month}.${year}`;
+            },
+
+            getToday() {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return today;
+            },
+
+            daysBetween(date1, date2) {
+                const timeDiff = date2.getTime() - date1.getTime();
+                return Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            }
+        };
+
+        // Функции форматирования ввода
+        const InputFormatter = {
+            formatDateInput(input) {
+                let value = input.value.replace(/\D/g, '');
+                
+                if (value.length > 0) {
+                    if (value.length <= 2) {
+                        value = value;
+                    } else if (value.length <= 4) {
+                        value = value.substring(0, 2) + '.' + value.substring(2);
+                    } else if (value.length <= 8) {
+                        value = value.substring(0, 2) + '.' + value.substring(2, 4) + '.' + value.substring(4);
+                    } else {
+                        value = value.substring(0, 2) + '.' + value.substring(2, 4) + '.' + value.substring(4, 8);
+                    }
+                }
+                
+                input.value = value;
+            },
+
+            autoCompleteDate(input, type) {
+                let value = input.value.replace(/\D/g, '');
+                if (!value) return;
+                
+                const currentDate = new Date();
+                const currentYear = currentDate.getFullYear();
+                const currentYearShort = currentYear % 100;
+                
+                // 4 цифры - день и месяц
+                if (value.length === 4) {
+                    const day = value.substring(0, 2);
+                    const month = value.substring(2, 4);
+                    let year = currentYear;
+                    
+                    const testDate = new Date(currentYear, month - 1, day);
+                    
+                    // ОРИГИНАЛЬНАЯ ЛОГИКА: для "производства" если дата в будущем - предыдущий год
+                    // для "годен до" если дата в прошлом - следующий год
+                    if (type === 'production') {
+                        if (testDate > currentDate) year = currentYear - 1;
+                    } else {
+                        if (testDate < currentDate) year = currentYear + 1;
+                    }
+                    
+                    value = day + month + year;
+                }
+                // 6 цифры - день, месяц, год (2 цифры) - ВСЕГДА ТЕКУЩИЙ ВЕК
+                else if (value.length === 6) {
+                    const day = value.substring(0, 2);
+                    const month = value.substring(2, 4);
+                    const yearShort = value.substring(4, 6);
+                    
+                    const century = Math.floor(currentYear / 100) * 100;
+                    let fullYear = century + parseInt(yearShort);
+                    
+                    // Корректировка, если год получился меньше 1000 (на всякий случай)
+                    if (fullYear < 1000) {
+                        fullYear += 100;
+                    }
+                    
+                    value = day + month + fullYear;
+                }
+                // 8 цифры - полная дата, берем как есть
+                else if (value.length === 8) {
+                    // Ничего не меняем
+                } else {
+                    return;
+                }
+                
+                // Форматируем и вставляем обратно
+                const day = value.substring(0, 2);
+                const month = value.substring(2, 4);
+                const year = value.substring(4, 8);
+                
+                const parsedDate = DateUtils.parseDate(`${day}.${month}.${year}`);
+                if (parsedDate) {
+                    input.value = `${day}.${month}.${year}`;
+                    Calculator.calculate();
+                }
+            }
+        };
+
+        // Логика расчета
+        const Calculator = {
+            calculate() {
+                this.clearErrors();
+                
+                const productionDateStr = elements.productionDate.value.trim();
+                const expiryDateStr = elements.expiryDate.value.trim();
+                const shelfLifeStr = elements.shelfLife.value.trim();
+                
+                const productionDate = DateUtils.parseDate(productionDateStr);
+                const expiryDate = DateUtils.parseDate(expiryDateStr);
+                const shelfLife = shelfLifeStr ? parseInt(shelfLifeStr, 10) : null;
+                
+                // Валидация ввода
+                const validationErrors = this.validateInput(productionDateStr, productionDate, 
+                                                          expiryDateStr, expiryDate, 
+                                                          shelfLifeStr, shelfLife);
+                if (validationErrors) return;
+                
+                // Определение сценария расчета
+                const scenario = this.determineScenario(productionDate, expiryDate, shelfLife);
+                
+                let calculatedData;
+                try {
+                    calculatedData = this.calculateScenario(scenario, productionDate, expiryDate, shelfLife);
+                } catch (error) {
+                    this.showError(error.message, error.field);
+                    return;
+                }
+                
+                if (!calculatedData) {
+                    this.resetResults();
+                    return;
+                }
+                
+                // Отображение результатов
+                this.displayResults(calculatedData);
+            },
+
+            validateInput(productionDateStr, productionDate, expiryDateStr, expiryDate, shelfLifeStr, shelfLife) {
+                let hasError = false;
+                
+                if (productionDateStr && !productionDate) {
+                    this.showError('Некорректная дата', 'production');
+                    hasError = true;
+                }
+                
+                if (expiryDateStr && !expiryDate) {
+                    this.showError('Некорректная дата', 'expiry');
+                    hasError = true;
+                }
+                
+                if (shelfLifeStr) {
+                    if (isNaN(shelfLife) || shelfLife <= 0 || !Number.isInteger(shelfLife)) {
+                        this.showError('Срок должен быть целым положительным числом', 'shelfLife');
+                        hasError = true;
+                    } else if (shelfLife > CONFIG.MAX_SHELF_LIFE) {
+                        this.showError(`Максимальное значение: ${CONFIG.MAX_SHELF_LIFE} дней`, 'shelfLife');
+                        hasError = true;
+                    }
+                }
+                
+                if (hasError) {
+                    this.resetResults();
+                    return true;
+                }
+                
+                if (productionDate && expiryDate && productionDate > expiryDate) {
+                    this.showError('Дата производства не может быть позже срока годности', 'production');
+                    this.showError('Дата производства не может быть позже срока годности', 'expiry');
+                    this.resetResults();
+                    return true;
+                }
+                
+                return false;
+            },
+
+            determineScenario(productionDate, expiryDate, shelfLife) {
+                const hasProductionDate = !!productionDate;
+                const hasExpiryDate = !!expiryDate;
+                const hasShelfLife = shelfLife !== null && !isNaN(shelfLife);
+                
+                if (hasProductionDate && hasShelfLife) return 1;
+                if (hasProductionDate && hasExpiryDate) return 2;
+                if (hasExpiryDate && hasShelfLife) return 3;
+                return 0;
+            },
+
+            calculateScenario(scenario, productionDate, expiryDate, shelfLife) {
+                switch (scenario) {
+                    case 1: // Дата производства + Срок годности
+                        return this.calculateScenario1(productionDate, shelfLife);
+                    case 2: // Дата производства + Дата годности
+                        return this.calculateScenario2(productionDate, expiryDate);
+                    case 3: // Дата годности + Срок годности
+                        return this.calculateScenario3(expiryDate, shelfLife);
+                    default:
+                        return null;
+                }
+            },
+
+            calculateScenario1(productionDate, shelfLife) {
+                const calculatedExpiryDate = new Date(productionDate);
+                calculatedExpiryDate.setDate(calculatedExpiryDate.getDate() + shelfLife);
+                
+                elements.expiryDate.value = DateUtils.formatDate(calculatedExpiryDate);
+                elements.expiryDate.classList.add('calculated');
+                
+                return {
+                    productionDate,
+                    expiryDate: calculatedExpiryDate,
+                    shelfLife
+                };
+            },
+
+            calculateScenario2(productionDate, expiryDate) {
+                const calculatedShelfLife = DateUtils.daysBetween(productionDate, expiryDate);
+                
+                if (calculatedShelfLife <= 0) {
+                    throw { 
+                        message: 'Дата годности должна быть позже даты производства', 
+                        field: 'both' 
+                    };
+                }
+                
+                elements.shelfLife.value = calculatedShelfLife;
+                elements.shelfLife.classList.add('calculated');
+                
+                return {
+                    productionDate,
+                    expiryDate,
+                    shelfLife: calculatedShelfLife
+                };
+            },
+
+            calculateScenario3(expiryDate, shelfLife) {
+                const calculatedProductionDate = new Date(expiryDate);
+                calculatedProductionDate.setDate(calculatedProductionDate.getDate() - shelfLife);
+                
+                elements.productionDate.value = DateUtils.formatDate(calculatedProductionDate);
+                elements.productionDate.classList.add('calculated');
+                
+                return {
+                    productionDate: calculatedProductionDate,
+                    expiryDate,
+                    shelfLife
+                };
+            },
+
+            displayResults(data) {
+                const today = DateUtils.getToday();
+                const expiryDateForCalc = new Date(data.expiryDate);
+                expiryDateForCalc.setHours(0, 0, 0, 0);
+                
+                let daysLeft = DateUtils.daysBetween(today, expiryDateForCalc);
+                if (daysLeft < 0) daysLeft = 0;
+                
+                // Расчет процента
+                let percentage = (daysLeft / data.shelfLife) * 100;
+                percentage = Math.min(100, Math.max(0, percentage));
+                
+                // Отображение процента
+                elements.percentage.textContent = `${percentage.toFixed(2)}%`;
+                
+                // Цветовая индикация
+                if (percentage >= 70) {
+                    elements.percentage.className = 'percentage green';
+                } else if (percentage >= 30) {
+                    elements.percentage.className = 'percentage yellow';
+                } else {
+                    elements.percentage.className = 'percentage red';
+                }
+                
+                // Отображение оставшихся дней
+                this.displayDaysLeft(daysLeft, expiryDateForCalc, today);
+                
+                // Отображение дата истечения
+                elements.expirationDateText.textContent = 
+                    `Дата истечения: ${DateUtils.formatDate(data.expiryDate)}`;
+            },
+
+            displayDaysLeft(daysLeft, expiryDate, today) {
+                if (daysLeft === 0) {
+                    if (expiryDate.getTime() === today.getTime()) {
+                        elements.daysLeft.textContent = 'Срок годности истекает сегодня';
+                        elements.daysLeft.style.color = 'var(--warning-orange)';
+                    } else {
+                        elements.daysLeft.textContent = 'Срок годности истек';
+                        elements.daysLeft.style.color = 'var(--error-red)';
+                    }
+                } else if (daysLeft === 1) {
+                    elements.daysLeft.textContent = 'Остался 1 день';
+                    elements.daysLeft.style.color = 'var(--warning-orange)';
+                } else {
+                    elements.daysLeft.textContent = `Осталось дней: ${daysLeft}`;
+                    elements.daysLeft.style.color = 'var(--dark-blue)';
+                }
+            },
+
+            clearErrors() {
+                elements.productionDate.classList.remove('error');
+                elements.expiryDate.classList.remove('error');
+                elements.shelfLife.classList.remove('error');
+                
+                Object.values(elements.errors).forEach(errorElement => {
+                    errorElement.textContent = '';
+                });
+            },
+
+            showError(message, field) {
+                if (field === 'both') {
+                    elements.productionDate.classList.add('error');
+                    elements.expiryDate.classList.add('error');
+                    elements.errors.production.textContent = message;
+                    elements.errors.expiry.textContent = message;
+                } else {
+                    elements[field === 'shelfLife' ? 'shelfLife' : 
+                            field === 'expiry' ? 'expiryDate' : 'productionDate'].classList.add('error');
+                    elements.errors[field].textContent = message;
+                }
+            },
+
+            resetResults() {
+                elements.percentage.textContent = '-';
+                elements.percentage.className = 'percentage';
+                elements.daysLeft.textContent = '-';
+                elements.daysLeft.style.color = 'var(--dark-blue)';
+                elements.expirationDateText.textContent = 'Дата истечения: -';
+            }
+        };
+
+        // Обработчики событий
+        const EventHandlers = {
+            // Poka-yoke обработчики
+            handleProductionDateFocus() {
+                elements.productionDate.value = '';
+                elements.productionDate.classList.remove('calculated');
+                elements.expiryDate.value = '';
+                elements.expiryDate.classList.remove('calculated');
+                elements.shelfLife.value = '';
+                elements.shelfLife.classList.remove('calculated');
+                
+                QuickButtons.resetActive();
+                Calculator.resetResults();
+            },
+
+            handleExpiryDateFocus() {
+                elements.expiryDate.value = '';
+                elements.expiryDate.classList.remove('calculated');
+                elements.shelfLife.value = '';
+                elements.shelfLife.classList.remove('calculated');
+                
+                QuickButtons.resetActive();
+                Calculator.calculate();
+            },
+
+            handleShelfLifeFocus() {
+                elements.shelfLife.value = '';
+                elements.shelfLife.classList.remove('calculated');
+                
+                QuickButtons.resetActive();
+                Calculator.calculate();
+            },
+
+            handleProductionDateInput(e) {
+                InputFormatter.formatDateInput(e.target);
+                Calculator.calculate();
+            },
+
+            handleExpiryDateInput(e) {
+                InputFormatter.formatDateInput(e.target);
+                
+                elements.shelfLife.value = '';
+                elements.shelfLife.classList.remove('calculated');
+                
+                Calculator.calculate();
+            },
+
+            handleShelfLifeInput() {
+                // Только целые числа
+                if (elements.shelfLife.value.includes('.') || elements.shelfLife.value.includes(',')) {
+                    elements.shelfLife.value = Math.round(
+                        elements.shelfLife.value.replace(',', '.')
+                    );
+                }
+                
+                if (elements.shelfLife.value < 1) {
+                    elements.shelfLife.value = 1;
+                }
+                
+                Calculator.calculate();
+            }
+        };
+
+        // Управление быстрыми кнопками
+        const QuickButtons = {
+            init() {
+                elements.quickButtons.forEach((button, index) => {
+                    button.setAttribute('data-days', CONFIG.QUICK_DAYS[index]);
+                    button.textContent = CONFIG.QUICK_DAYS[index];
+                    button.addEventListener('click', () => this.handleClick(button));
+                });
+            },
+
+            handleClick(button) {
+                this.resetActive();
+                button.classList.add('active');
+                state.activeQuickButton = button;
+                
+                const days = parseInt(button.getAttribute('data-days'), 10);
+                elements.shelfLife.value = days;
+                elements.shelfLife.classList.remove('calculated');
+                
+                Calculator.calculate();
+            },
+
+            resetActive() {
+                if (state.activeQuickButton) {
+                    state.activeQuickButton.classList.remove('active');
+                    state.activeQuickButton = null;
+                }
+            }
+        };
+
+        // Инициализация приложения
+        function initApp() {
+            // Установка текущей даты
+            elements.currentDate.textContent = `Расчет на: ${DateUtils.formatDate(new Date())}`;
+            
+            // Настройка ссылки в футере
+            if (state.appRated) {
+                elements.footerLink.textContent = 'donate';
+                elements.footerLink.href = CONFIG.DONATE_LINK;
+                elements.footerLink.title = 'на развитие';
+                elements.donateSub.style.display = 'block';
+            } else {
+                elements.footerLink.textContent = 'Оценить приложение';
+                elements.footerLink.href = CONFIG.RUSTORE_LINK;
+                elements.footerLink.title = 'Перейти в RuStore для оценки приложения';
+                elements.donateSub.style.display = 'none';
+            }
+            
+            // Обработчики для полей ввода
+            elements.productionDate.addEventListener('focus', EventHandlers.handleProductionDateFocus);
+            elements.productionDate.addEventListener('input', EventHandlers.handleProductionDateInput);
+            elements.productionDate.addEventListener('keydown', e => {
+                if (e.key === 'Enter') elements.expiryDate.focus();
+            });
+            
+            elements.expiryDate.addEventListener('focus', EventHandlers.handleExpiryDateFocus);
+            elements.expiryDate.addEventListener('input', EventHandlers.handleExpiryDateInput);
+            elements.expiryDate.addEventListener('keydown', e => {
+                if (e.key === 'Enter') elements.shelfLife.focus();
+            });
+            
+            elements.shelfLife.addEventListener('focus', EventHandlers.handleShelfLifeFocus);
+            elements.shelfLife.addEventListener('input', EventHandlers.handleShelfLifeInput);
+            elements.shelfLife.addEventListener('keydown', e => {
+                if (e.key === 'Enter') elements.productionDate.focus();
+            });
+            
+            // Автодополнение дат
+            elements.productionDate.addEventListener('blur', () => {
+                if (elements.productionDate.value.trim()) {
+                    InputFormatter.autoCompleteDate(elements.productionDate, 'production');
+                }
+            });
+            
+            elements.expiryDate.addEventListener('blur', () => {
+                if (elements.expiryDate.value.trim()) {
+                    InputFormatter.autoCompleteDate(elements.expiryDate, 'expiry');
+                }
+            });
+            
+            // Ограничение максимального значения
+            elements.shelfLife.addEventListener('change', () => {
+                const value = parseInt(elements.shelfLife.value, 10);
+                if (value > CONFIG.MAX_SHELF_LIFE) {
+                    elements.shelfLife.value = CONFIG.MAX_SHELF_LIFE;
+                    elements.errors.shelfLife.textContent = 
+                        `Максимальное значение: ${CONFIG.MAX_SHELF_LIFE} дней`;
+                    setTimeout(() => elements.errors.shelfLife.textContent = '', 3000);
+                }
+            });
+            
+            // Инициализация быстрых кнопок
+            QuickButtons.init();
+            
+            // Обработчик ссылки в футере
+            elements.footerLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                if (elements.footerLink.textContent === 'Оценить приложение') {
+                    localStorage.setItem('appRated', 'true');
+                    window.open(elements.footerLink.href, '_blank');
+                    
+                    elements.footerLink.textContent = 'donate';
+                    elements.footerLink.href = CONFIG.DONATE_LINK;
+                    elements.footerLink.title = 'на развитие';
+                    elements.donateSub.style.display = 'block';
+                } else {
+                    window.open(elements.footerLink.href, '_blank');
+                }
+            });
+            
+            // Первоначальный расчет
+            Calculator.calculate();
+        }
+
+        // Запуск приложения
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+
+    <!-- РЕГИСТРАЦИЯ СЕРВИС-ВОРКЕРА (ДОБАВЛЕНО В КОНЕЦ, НЕ МЕНЯЕТ ЛОГИКУ КАЛЬКУЛЯТОРА) -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/pwabuilder-sw.js')
+                    .then(function(registration) {
+                        console.log('✅ Service Worker зарегистрирован успешно с областью видимости:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.log('❌ Ошибка регистрации Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
