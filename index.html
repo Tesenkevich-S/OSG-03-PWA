@@ -1112,11 +1112,11 @@
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 
-    <!-- РЕГИСТРАЦИЯ СЕРВИС-ВОРКЕРА (ДОБАВЛЕНО В КОНЕЦ, НЕ МЕНЯЕТ ЛОГИКУ КАЛЬКУЛЯТОРА) -->
+    <!-- РЕГИСТРАЦИЯ СЕРВИС-ВОРКЕРА (ДОБАВЛЕНО В КОНЕЦ) -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/pwabuilder-sw.js')
+                navigator.serviceWorker.register('pwabuilder-sw.js')
                     .then(function(registration) {
                         console.log('✅ Service Worker зарегистрирован успешно с областью видимости:', registration.scope);
                     })
